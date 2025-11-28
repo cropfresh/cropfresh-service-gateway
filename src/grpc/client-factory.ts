@@ -1,7 +1,7 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
-import { logger } from '../utils/logger';
+import { logger, asyncLocalStorage } from '../utils/logger';
 
 export class GrpcClientFactory {
     static createClient<T extends grpc.Client>(
@@ -24,16 +24,15 @@ export class GrpcClientFactory {
             throw new Error(`Service ${serviceName} not found in proto ${protoPath}`);
         }
 
-        const client = new Service(address, grpc.credentials.createInsecure());
 
         // Interceptor to propagate trace ID
         const interceptor = (options: any, nextCall: any) => {
             return new grpc.InterceptingCall(nextCall(options), {
                 start: function (metadata: any, listener: any, next: any) {
-                    // Trace ID is expected to be set in the context or passed explicitly
-                    // For now, we rely on the caller to pass metadata, or we could use AsyncLocalStorage
-                    // But the requirement says "propagate it to gRPC calls".
-                    // We'll implement a helper to create metadata with trace ID.
+                    const store = asyncLocalStorage.getStore();
+                    if (store && store.traceId) {
+                        metadata.set('trace-id', store.traceId);
+                    }
                     next(metadata, listener);
                 },
             });
@@ -42,6 +41,9 @@ export class GrpcClientFactory {
         // Note: grpc-js interceptors are complex. 
         // A simpler approach for this story is to ensure we pass metadata with every call.
         // We will enforce that in the wrapper or usage.
+
+        // Apply interceptor
+        const client = new Service(address, grpc.credentials.createInsecure(), { interceptors: [interceptor] });
 
         return client;
     }

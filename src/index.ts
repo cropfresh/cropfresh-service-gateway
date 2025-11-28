@@ -1,12 +1,13 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import { pinoHttp } from 'pino-http';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { requestIdMiddleware } from './middleware/request-id';
 import { errorHandler } from './middleware/error-handler';
 import v1Router from './routes/v1';
+
+import { requestLogger, traceIdMiddleware } from './middleware/logging';
 
 const app = express();
 
@@ -20,15 +21,9 @@ app.use(requestIdMiddleware);
 // JSON Body Parser
 app.use(express.json());
 
-// Request Logging
-app.use(pinoHttp({
-    logger: logger as any,
-    // Use the ID generated/extracted by our middleware
-    genReqId: (req) => req.headers['x-trace-id'] as string,
-    customProps: (req, res) => ({
-        trace_id: req.headers['x-trace-id'],
-    }),
-}));
+// Standard Logging Middleware
+app.use(traceIdMiddleware);
+app.use(requestLogger);
 
 // Health Check
 app.get('/health', (req, res) => {
