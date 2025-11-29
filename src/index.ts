@@ -1,3 +1,6 @@
+// Tracing (Must be first)
+import './tracing';
+
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -8,6 +11,7 @@ import { errorHandler } from './middleware/error-handler';
 import v1Router from './routes/v1';
 
 import { requestLogger, traceIdMiddleware } from './middleware/logging';
+import { monitoringMiddleware, metricsHandler } from './middleware/monitoring';
 
 const app = express();
 
@@ -21,14 +25,26 @@ app.use(requestIdMiddleware);
 // JSON Body Parser
 app.use(express.json());
 
+// Monitoring Middleware (Prometheus metrics)
+app.use(monitoringMiddleware);
+
 // Standard Logging Middleware
 app.use(traceIdMiddleware);
 app.use(requestLogger);
 
-// Health Check
+// Health Check (Liveness)
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Readiness Check
+app.get('/ready', (req, res) => {
+    // TODO: Add actual dependency checks (Redis, etc.)
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Metrics Endpoint
+app.get('/metrics', metricsHandler);
 
 // Routes
 app.use('/v1', v1Router);
