@@ -12,6 +12,7 @@ import v1Router from './routes/v1';
 
 import { requestLogger, traceIdMiddleware } from './middleware/logging';
 import { monitoringMiddleware, metricsHandler } from './middleware/monitoring';
+import { livenessHandler, createReadinessHandler } from './middleware/health';
 
 const app = express();
 
@@ -32,16 +33,9 @@ app.use(monitoringMiddleware);
 app.use(traceIdMiddleware);
 app.use(requestLogger);
 
-// Health Check (Liveness)
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Readiness Check
-app.get('/ready', (req, res) => {
-    // TODO: Add actual dependency checks (Redis, etc.)
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+// Health check endpoints (Kubernetes probes)
+app.get('/health', livenessHandler);
+app.get('/ready', createReadinessHandler());
 
 // Metrics Endpoint
 app.get('/metrics', metricsHandler);

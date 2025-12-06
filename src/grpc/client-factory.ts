@@ -18,7 +18,14 @@ export class GrpcClientFactory {
         });
 
         const protoDescriptor = grpc.loadPackageDefinition(packageDefinition) as any;
-        const Service = protoDescriptor[serviceName];
+        
+        // Traverse the protoDescriptor to find the service (handles packages like cropfresh.auth.AuthService)
+        const servicePath = serviceName.split('.');
+        let Service = protoDescriptor;
+        for (const segment of servicePath) {
+            Service = Service[segment];
+            if (!Service) break;
+        }
 
         if (!Service) {
             throw new Error(`Service ${serviceName} not found in proto ${protoPath}`);
