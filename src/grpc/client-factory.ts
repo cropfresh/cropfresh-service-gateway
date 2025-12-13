@@ -10,7 +10,7 @@ export class GrpcClientFactory {
         address: string
     ): T {
         const packageDefinition = protoLoader.loadSync(protoPath, {
-            keepCase: true,
+            keepCase: true,  // Keep snake_case field names from proto
             longs: String,
             enums: String,
             defaults: true,
@@ -18,7 +18,7 @@ export class GrpcClientFactory {
         });
 
         const protoDescriptor = grpc.loadPackageDefinition(packageDefinition) as any;
-        
+
         // Traverse the protoDescriptor to find the service (handles packages like cropfresh.auth.AuthService)
         const servicePath = serviceName.split('.');
         let Service = protoDescriptor;

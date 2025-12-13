@@ -23,7 +23,7 @@ export interface ErrorResponse {
     };
 }
 
-export const sendSuccess = <T>(res: Response, data: T, meta: Record<string, any> = {}) => {
+export const sendSuccess = <T>(res: Response, data: T, statusCode: number = 200, meta: Record<string, any> = {}) => {
     const traceId = res.getHeader('X-Trace-ID') as string;
 
     const response: StandardResponse<T> = {
@@ -36,7 +36,7 @@ export const sendSuccess = <T>(res: Response, data: T, meta: Record<string, any>
         error: null,
     };
 
-    res.status(200).json(response);
+    res.status(statusCode).json(response);
 };
 
 export const sendError = (

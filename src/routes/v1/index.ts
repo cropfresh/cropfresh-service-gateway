@@ -2,11 +2,22 @@ import { Router } from 'express';
 import authRoutes from './auth';
 import catalogRoutes from './catalog';
 import orderRoutes from './orders';
+import teamRoutes from './team';
+import haulerRoutes from './hauler';
+import haulerAdminRoutes from './hauler-admin';
+import agentRoutes from './agent'; // Story 2.6
+import agentAdminRoutes from './agent-admin'; // Story 2.6
 
 const router = Router();
 
 router.use('/auth', authRoutes);
 router.use('/catalog', catalogRoutes);
 router.use('/orders', orderRoutes);
+router.use('/buyer/team', teamRoutes); // Story 2.4 Team Management
+router.use('/hauler/register', haulerRoutes); // Story 2.5 Hauler Registration
+router.use('/admin/haulers', haulerAdminRoutes); // Story 2.5 Admin Verification
+router.use('/agent', agentRoutes); // Story 2.6 Agent Mobile App
+router.use('/admin', agentAdminRoutes); // Story 2.6 Agent Admin Management
 
 export default router;
+
