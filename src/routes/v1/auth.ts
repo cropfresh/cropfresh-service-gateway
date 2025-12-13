@@ -843,5 +843,151 @@ router.post('/buyer/reset-password', async (req, res, next) => {
     }
 });
 
+// =====================================================
+// Story 2.8 - Session Management & Re-authentication
+// =====================================================
+
+/**
+ * POST /v1/auth/logout
+ * Universal logout endpoint (AC1)
+ */
+router.post('/logout', async (req, res, next) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const traceId = req.headers['x-trace-id'] as string;
+
+        if (!token) {
+            return sendError(res, 401, 'UNAUTHORIZED', 'Authorization token is required');
+        }
+
+        logger.info('Logout request received');
+
+        authClient.Logout(
+            { token },
+            createMetadata(traceId),
+            (err: any, response: any) => {
+                if (err) return next(err);
+                sendSuccess(res, {
+                    success: true,
+                    message: 'Logged out successfully',
+                });
+            }
+        );
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * POST /v1/auth/reauth/initiate
+ * Initiate re-authentication for critical actions (AC8)
+ */
+router.post('/reauth/initiate', async (req, res, next) => {
+    try {
+        const { action } = req.body;
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const traceId = req.headers['x-trace-id'] as string;
+
+        if (!token) {
+            return sendError(res, 401, 'UNAUTHORIZED', 'Authorization token is required');
+        }
+
+        if (!action) {
+            return sendError(res, 400, 'VALIDATION_ERROR', 'Action is required');
+        }
+
+        // TODO: Extract user_id and user_type from JWT token
+        // For now, these should come from the auth middleware
+        const userId = (req as any).user?.userId;
+        const userType = (req as any).user?.userType;
+
+        if (!userId) {
+            return sendError(res, 401, 'UNAUTHORIZED', 'Invalid token');
+        }
+
+        logger.info({ userId, action }, 'Re-auth initiate request received');
+
+        authClient.InitiateReauth(
+            {
+                userId: String(userId),
+                action,
+                userType: userType || 'FARMER',
+            },
+            createMetadata(traceId),
+            (err: any, response: any) => {
+                if (err) return next(err);
+
+                if (!response.success) {
+                    return sendError(res, 400, 'REAUTH_NOT_ALLOWED', response.message);
+                }
+
+                sendSuccess(res, {
+                    reauth_token: response.reauthToken,
+                    expires_in_seconds: response.expiresInSeconds,
+                    allowed_methods: response.allowedMethods,
+                });
+            }
+        );
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * POST /v1/auth/reauth/verify
+ * Verify re-authentication with PIN/OTP/Password (AC8)
+ */
+router.post('/reauth/verify', async (req, res, next) => {
+    try {
+        const { action, reauth_token, method, credential } = req.body;
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const traceId = req.headers['x-trace-id'] as string;
+
+        if (!token) {
+            return sendError(res, 401, 'UNAUTHORIZED', 'Authorization token is required');
+        }
+
+        if (!action || !reauth_token || !method || !credential) {
+            return sendError(res, 400, 'VALIDATION_ERROR',
+                'Action, reauth_token, method, and credential are required');
+        }
+
+        const userId = (req as any).user?.userId;
+        const phone = (req as any).user?.phone;
+
+        if (!userId) {
+            return sendError(res, 401, 'UNAUTHORIZED', 'Invalid token');
+        }
+
+        logger.info({ userId, action, method }, 'Re-auth verify request received');
+
+        authClient.ValidateReauth(
+            {
+                userId: String(userId),
+                action,
+                reauthToken: reauth_token,
+                method,
+                credential,
+                phone: phone || '',
+            },
+            createMetadata(traceId),
+            (err: any, response: any) => {
+                if (err) return next(err);
+
+                if (!response.success) {
+                    return sendError(res, 401, response.error || 'REAUTH_FAILED', response.message);
+                }
+
+                sendSuccess(res, {
+                    success: true,
+                    message: 'Re-authentication successful',
+                });
+            }
+        );
+    } catch (err) {
+        next(err);
+    }
+});
+
 export default router;
 
