@@ -12,6 +12,9 @@ import buyerAddressRoutes from './buyers/addresses'; // Story 2.7
 import farmersListingsRoutes from './farmers/listings'; // Story 3.1
 import farmersPhotosRoutes from './farmers/photos'; // Story 3.2
 import farmersGradingRoutes from './farmers/grading'; // Story 3.3
+import farmersDroppointRoutes from './farmers/droppoint'; // Story 3.4
+import farmersDroppointsRoutes from './farmers/droppoints'; // Story 3.4
+import farmersMatchesRoutes from './farmers/matches'; // Story 3.5
 
 const router = Router();
 
@@ -28,6 +31,9 @@ router.use('/buyers/addresses', buyerAddressRoutes); // Story 2.7 Delivery Addre
 router.use('/farmers/listings', farmersListingsRoutes); // Story 3.1 Farmer Listings
 router.use('/farmers/listings', farmersPhotosRoutes); // Story 3.2 Photo Upload
 router.use('/farmers/listings', farmersGradingRoutes); // Story 3.3 AI Grading & Pricing
+router.use('/farmers/listings', farmersDroppointRoutes); // Story 3.4 Drop Point Assignment
+router.use('/farmers/droppoints', farmersDroppointsRoutes); // Story 3.4 Drop Point Discovery
+router.use('/farmers/matches', farmersMatchesRoutes); // Story 3.5 Buyer Match View
 
 export default router;
 

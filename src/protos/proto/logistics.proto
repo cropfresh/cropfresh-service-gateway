@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package cropfresh.logistics;
+
+service LogisticsService {
+  rpc AssignRoute(AssignRouteRequest) returns (AssignRouteResponse);
+  rpc GetOptimizedRoute(GetOptimizedRouteRequest) returns (GetOptimizedRouteResponse);
+  rpc UpdateLocation(UpdateLocationRequest) returns (UpdateLocationResponse);
+  rpc CompleteRoute(CompleteRouteRequest) returns (CompleteRouteResponse);
+}
+
+// ============================================================================
+// Drop Point Service (Story 3.4)
+// ============================================================================
+
+service DropPointService {
+  // Assign optimal drop point to a listing
+  rpc AssignDropPoint(AssignDropPointRequest) returns (DropPointAssignmentResponse);
+  
+  // Get existing assignment for a listing
+  rpc GetDropPointAssignment(GetDropPointAssignmentRequest) returns (DropPointAssignmentResponse);
+  
+  // Get nearby drop points for a location
+  rpc GetNearbyDropPoints(GetNearbyDropPointsRequest) returns (GetNearbyDropPointsResponse);
+  
+  // Reassign to a different drop point
+  rpc ReassignDropPoint(ReassignDropPointRequest) returns (DropPointAssignmentResponse);
+  
+  // Get upcoming deliveries for a farmer
+  rpc GetUpcomingDeliveries(GetUpcomingDeliveriesRequest) returns (GetUpcomingDeliveriesResponse);
+}
+
+message AssignRouteRequest {
+  string hauler_id = 1;
+  repeated string order_ids = 2;
+  string vehicle_type = 3;
+}
+
+message AssignRouteResponse {
+  string route_id = 1;
+  repeated Waypoint waypoints = 2;
+  double estimated_distance_km = 3;
+  double estimated_duration_hours = 4;
+  double earnings = 5;
+}
+
+message Waypoint {
+  string location = 1;
+  string type = 2; // pickup, delivery
+  string address = 3;
+  double lat = 4;
+  double lng = 5;
+}
+
+message GetOptimizedRouteRequest {
+  string route_id = 1;
+}
+
+message GetOptimizedRouteResponse {
+  repeated Waypoint optimized_waypoints = 1;
+  double total_distance_km = 2;
+}
+
+message UpdateLocationRequest {
+  string hauler_id = 1;
+  string route_id = 2;
+  double lat = 3;
+  double lng = 4;
+}
+
+message UpdateLocationResponse {
+  bool success = 1;
+  string next_waypoint = 2;
+}
+
+message CompleteRouteRequest {
+  string route_id = 1;
+  string hauler_id = 2;
+}
+
+message CompleteRouteResponse {
+  bool success = 1;
+  double earnings = 2;
+  string payment_id = 3;
+}
+
+// ============================================================================
+// Drop Point Messages (Story 3.4)
+// ============================================================================
+
+message GeoLocation {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message AssignDropPointRequest {
+  int32 listing_id = 1;
+  int32 farmer_id = 2;
+  GeoLocation farmer_location = 3;
+  string crop_type = 4;
+  double quantity_kg = 5;
+  string preferred_date = 6; // ISO date string, optional
+}
+
+message GetDropPointAssignmentRequest {
+  int32 listing_id = 1;
+}
+
+message GetNearbyDropPointsRequest {
+  GeoLocation location = 1;
+  double radius_km = 2;
+}
+
+message ReassignDropPointRequest {
+  int32 listing_id = 1;
+  string new_drop_point_id = 2;
+  string change_reason = 3;
+}
+
+message GetUpcomingDeliveriesRequest {
+  int32 farmer_id = 1;
+}
+
+message DropPointInfo {
+  string id = 1;
+  string name = 2;
+  string address = 3;
+  GeoLocation location = 4;
+  double distance_km = 5;
+  bool is_open = 6;
+}
+
+message PickupWindow {
+  string start = 1; // ISO timestamp
+  string end = 2;   // ISO timestamp
+}
+
+message DropPointAssignmentResponse {
+  string assignment_id = 1;
+  int32 listing_id = 2;
+  DropPointInfo drop_point = 3;
+  PickupWindow pickup_window = 4;
+  int32 crates_needed = 5;
+  string status = 6;
+  string listing_status = 7; // ASSIGNED
+}
+
+message GetNearbyDropPointsResponse {
+  repeated DropPointInfo drop_points = 1;
+}
+
+message GetUpcomingDeliveriesResponse {
+  repeated DropPointAssignmentResponse deliveries = 1;
+}

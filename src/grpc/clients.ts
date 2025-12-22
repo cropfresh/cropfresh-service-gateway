@@ -25,6 +25,12 @@ export const orderClient = GrpcClientFactory.createClient<any>(
     `${config.services.order.host}:${config.services.order.port}`
 );
 
+export const matchClient = GrpcClientFactory.createClient<any>(
+    'cropfresh.order.MatchService',
+    path.join(PROTO_ROOT, 'match.proto'),
+    `${config.services.order.host}:${config.services.order.port}`
+);
+
 // Add other clients as needed
 
 export { createMetadata } from './client-factory';
