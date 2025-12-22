@@ -7,16 +7,25 @@
  * - DELETE /v1/users/sessions          - Revoke all except current (AC5)
  */
 
-import { Router } from 'express';
-import { authClient, createMetadata } from '../../grpc/clients';
-import { sendSuccess, sendError } from '../../utils/response-handler';
-import { logger } from '../../utils/logger';
+import { Router, Request, Response, NextFunction } from 'express';
+import { authClient, createMetadata } from '../../../grpc/clients';
+import { sendSuccess, sendError } from '../../../utils/response-handler';
+import { logger } from '../../../utils/logger';
 import {
     listSessionsSchema,
     revokeSessionSchema,
     revokeAllSessionsSchema,
-} from '../../schemas/session-schemas';
-import { authMiddleware } from '../../middleware/auth';
+} from '../../../schemas/session-schemas';
+import { authMiddleware } from '../../../middleware/auth';
+
+// Type for authenticated request with user info
+interface AuthRequest extends Request {
+    user?: {
+        userId: number;
+        sessionId: number;
+        phone?: string;
+    };
+}
 
 const router = Router();
 
@@ -27,11 +36,11 @@ router.use(authMiddleware);
  * GET /v1/users/sessions
  * List all active sessions for the current user (AC3)
  */
-router.get('/', async (req, res, next) => {
+router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         await listSessionsSchema.parseAsync(req);
         const traceId = req.headers['x-trace-id'] as string;
-        const { userId, sessionId } = req.user as { userId: number; sessionId: number };
+        const { userId, sessionId } = req.user!;
 
         logger.info({ userId }, 'List sessions request received');
 
@@ -71,14 +80,11 @@ router.get('/', async (req, res, next) => {
  * DELETE /v1/users/sessions/:sessionId
  * Revoke a specific session (remote logout) (AC4)
  */
-router.delete('/:sessionId', async (req, res, next) => {
+router.delete('/:sessionId', async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const { params } = await revokeSessionSchema.parseAsync(req);
         const traceId = req.headers['x-trace-id'] as string;
-        const { userId, sessionId: currentSessionId } = req.user as {
-            userId: number;
-            sessionId: number;
-        };
+        const { userId, sessionId: currentSessionId } = req.user!;
 
         const targetSessionId = parseInt(params.sessionId, 10);
 
@@ -129,15 +135,11 @@ router.delete('/:sessionId', async (req, res, next) => {
  * DELETE /v1/users/sessions
  * Revoke all sessions except current (AC5)
  */
-router.delete('/', async (req, res, next) => {
+router.delete('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         await revokeAllSessionsSchema.parseAsync(req);
         const traceId = req.headers['x-trace-id'] as string;
-        const { userId, sessionId: currentSessionId, phone } = req.user as {
-            userId: number;
-            sessionId: number;
-            phone: string;
-        };
+        const { userId, sessionId: currentSessionId, phone } = req.user!;
 
         logger.info({ userId }, 'Revoke all sessions request received');
 
