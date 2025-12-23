@@ -15,6 +15,7 @@ import farmersGradingRoutes from './farmers/grading'; // Story 3.3
 import farmersDroppointRoutes from './farmers/droppoint'; // Story 3.4
 import farmersDroppointsRoutes from './farmers/droppoints'; // Story 3.4
 import farmersMatchesRoutes from './farmers/matches'; // Story 3.5
+import farmersTransactionsRoutes from './farmers/transactions'; // Story 3.7
 
 const router = Router();
 
@@ -34,6 +35,7 @@ router.use('/farmers/listings', farmersGradingRoutes); // Story 3.3 AI Grading &
 router.use('/farmers/listings', farmersDroppointRoutes); // Story 3.4 Drop Point Assignment
 router.use('/farmers/droppoints', farmersDroppointsRoutes); // Story 3.4 Drop Point Discovery
 router.use('/farmers/matches', farmersMatchesRoutes); // Story 3.5 Buyer Match View
+router.use('/farmers', farmersTransactionsRoutes); // Story 3.7 Transaction History
 
 export default router;
 
