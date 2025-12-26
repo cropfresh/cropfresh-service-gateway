@@ -214,23 +214,71 @@ describe('Farmers Listings Routes', () => {
     });
 
     // --------------------------------------------------------------------------
-    // DELETE /v1/farmers/listings/:id
+    // DELETE /v1/farmers/listings/:id - Story 3.9
     // --------------------------------------------------------------------------
     describe('DELETE /v1/farmers/listings/:id', () => {
-        it('should cancel listing', async () => {
+        it('should cancel listing with valid reason', async () => {
             // Arrange
             mockGrpcClient.cancelListing.mockResolvedValue({
                 success: true,
-                message: 'Listing cancelled',
+                message: 'Listing cancelled successfully',
             });
 
             // Act
             const response = await request(app)
-                .delete('/v1/farmers/listings/1');
+                .delete('/v1/farmers/listings/1')
+                .send({ reason: 'SOLD_ELSEWHERE' });
 
             // Assert
             expect(response.status).toBe(200);
             expect(response.body.data.success).toBe(true);
+            expect(mockGrpcClient.cancelListing).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: 1,
+                    farmerId: 1,
+                    cancellationReason: 'SOLD_ELSEWHERE',
+                })
+            );
+        });
+
+        it('Story 3.9 AC7: should return 400 for missing reason', async () => {
+            // Act - Not sending reason body
+            const response = await request(app)
+                .delete('/v1/farmers/listings/1')
+                .send({});
+
+            // Assert
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        });
+
+        it('Story 3.9 AC7: should return 400 for invalid reason', async () => {
+            // Act - Sending invalid reason
+            const response = await request(app)
+                .delete('/v1/farmers/listings/1')
+                .send({ reason: 'INVALID_REASON' });
+
+            // Assert
+            expect(response.status).toBe(400);
+            expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        });
+
+        it('Story 3.9: should pass all valid reason types', async () => {
+            const validReasons = ['SOLD_ELSEWHERE', 'QUALITY_CHANGED', 'CHANGED_MIND', 'OTHER'];
+
+            for (const reason of validReasons) {
+                mockGrpcClient.cancelListing.mockResolvedValue({
+                    success: true,
+                    message: 'Listing cancelled',
+                });
+
+                const response = await request(app)
+                    .delete('/v1/farmers/listings/1')
+                    .send({ reason });
+
+                expect(response.status).toBe(200);
+            }
         });
     });
 });
+

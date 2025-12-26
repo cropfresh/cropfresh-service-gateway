@@ -67,3 +67,27 @@ export const listingIdParamSchema = z.object({
 });
 
 export type ListingIdParam = z.infer<typeof listingIdParamSchema>;
+
+// ============================================================================
+// Story 3.9: Cancel Listing - Request Body
+// ============================================================================
+
+/**
+ * Cancel listing request body schema
+ * 
+ * SITUATION: Farmer cancels a listing with reason selection (AC7)
+ * TASK: Validate cancellation reason is one of allowed values
+ * ACTION: Zod enum validation before gRPC call
+ * RESULT: Typed reason passed to catalog-service
+ */
+export const cancelListingSchema = z.object({
+    reason: z.enum([
+        'SOLD_ELSEWHERE',
+        'QUALITY_CHANGED',
+        'CHANGED_MIND',
+        'OTHER'
+    ]).describe('Why the farmer is cancelling the listing'),
+});
+
+export type CancelListingBody = z.infer<typeof cancelListingSchema>;
+

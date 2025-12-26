@@ -18,6 +18,7 @@ import {
     updateListingSchema,
     listListingsQuerySchema,
     listingIdParamSchema,
+    cancelListingSchema,
 } from '../../../schemas/listing';
 import { catalogGrpcClient } from '../../../grpc/catalog-client';
 import { logger } from '../../../utils/logger';
@@ -261,11 +262,17 @@ router.patch(
 
 /**
  * DELETE /v1/farmers/listings/:id
- * Cancel a listing
+ * Cancel a listing - Story 3.9: Now accepts reason in body
+ * 
+ * SITUATION: Farmer cancels listing with reason for analytics (AC7)
+ * TASK: Validate reason, forward to catalog-service
+ * ACTION: Parse body, call gRPC with reason
+ * RESULT: Listing cancelled with reason stored
  */
 router.delete(
     '/:id',
     validateParams(listingIdParamSchema),
+    validateBody(cancelListingSchema),
     async (req: AuthenticatedRequest, res: Response) => {
         try {
             const farmerId = req.user?.id;
@@ -274,10 +281,12 @@ router.delete(
             }
 
             const id = (req.params as any).id;
-            await catalogGrpcClient.cancelListing({ id, farmerId });
+            const { reason } = req.body;
 
-            logger.info({ listingId: id, farmerId }, 'Listing cancelled via REST');
-            return successResponse(res, { success: true, message: 'Listing cancelled' });
+            await catalogGrpcClient.cancelListing({ id, farmerId, cancellationReason: reason });
+
+            logger.info({ listingId: id, farmerId, reason }, 'Listing cancelled via REST (Story 3.9)');
+            return successResponse(res, { success: true, message: 'Listing cancelled successfully' });
         } catch (error) {
             return mapGrpcError(error, res);
         }

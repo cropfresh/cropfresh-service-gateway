@@ -50,6 +50,7 @@ interface UpdateListingRequest {
 interface CancelListingRequest {
     id: number;
     farmerId: number;
+    cancellationReason?: string; // Story 3.9: AC7-9
 }
 
 interface ListingResponse {
