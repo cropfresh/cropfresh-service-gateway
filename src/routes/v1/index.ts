@@ -17,6 +17,8 @@ import farmersDroppointsRoutes from './farmers/droppoints'; // Story 3.4
 import farmersMatchesRoutes from './farmers/matches'; // Story 3.5
 import farmersTransactionsRoutes from './farmers/transactions'; // Story 3.7
 import farmersNotificationsRoutes from './farmers/notifications'; // Story 3.8
+import farmersRatingsRoutes from './farmers/ratings'; // Story 3.10
+import farmersEducationRoutes from './farmers/education'; // Story 3.11
 
 const router = Router();
 
@@ -38,6 +40,8 @@ router.use('/farmers/droppoints', farmersDroppointsRoutes); // Story 3.4 Drop Po
 router.use('/farmers/matches', farmersMatchesRoutes); // Story 3.5 Buyer Match View
 router.use('/farmers', farmersTransactionsRoutes); // Story 3.7 Transaction History
 router.use('/farmers/notifications', farmersNotificationsRoutes); // Story 3.8 Notifications
+router.use('/farmers/ratings', farmersRatingsRoutes); // Story 3.10 Quality Ratings
+router.use('/farmers/education', farmersEducationRoutes); // Story 3.11 Educational Content
 
 export default router;
 
